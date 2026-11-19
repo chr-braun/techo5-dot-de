@@ -1,0 +1,29 @@
+# Workaround für https://github.com/HuskerMinion/techo5-dot/issues/51
+# Nach einem Home-Assistant-Neustart steht die Wake-Word-Auswahl mancher Dots auf "no_wake_word".
+# Diese Automation setzt sie vier Minuten nach dem Start wieder, wenn sie abweicht.
+#
+# ANPASSEN: Entity-IDs ("select.<name>_wake_word" o. ä. - bei deutscher HA-Oberfläche z. B.
+# "select.<name>_aktivierungswort") und das gewünschte Wake Word je Dot.
+# Pausen zwischen den Schritten sind Absicht: gleichzeitige Änderungen am selben Gerät
+# überschreiben sich gegenseitig.
+alias: "Dots: Wake-Words nach HA-Neustart wiederherstellen"
+mode: single
+triggers:
+  - trigger: homeassistant
+    event: start
+actions:
+  - delay: "00:04:00"
+  - repeat:
+      for_each:
+        - { sel: select.dot_wohnzimmer_wake_word,   wort: "Okay Nabu" }
+        - { sel: select.dot_wohnzimmer_wake_word_2, wort: "Hey Jarvis" }
+        - { sel: select.dot_kueche_wake_word,       wort: "Hey Jarvis" }
+      sequence:
+        - if: "{{ states(repeat.item.sel) != repeat.item.wort }}"
+          then:
+            - action: select.select_option
+              target:
+                entity_id: "{{ repeat.item.sel }}"
+              data:
+                option: "{{ repeat.item.wort }}"
+            - delay: "00:00:15"
