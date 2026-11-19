@@ -4,7 +4,7 @@ Inoffizielle deutsche Anleitung: vom originalen **Echo Dot 2. Generation (2016, 
 **Home-Assistant-Sprachassistenten** mit [TECHO5 Dot](https://github.com/HuskerMinion/techo5-dot) –
 ohne Amazon-Cloud, ohne Alexa.
 
-> **Stand:** TECHO5 Dot **v1.0.72**, Home Assistant 2026.11, ESPHome 2026.5.
+> **Stand:** TECHO5 Dot **v1.0.73**, Home Assistant 2026.11, ESPHome 2026.5.
 > TECHO5 ändert sich fast wöchentlich. Maßgeblich ist immer die
 > [englische Anleitung](https://github.com/HuskerMinion/techo5/blob/main/docs/getting-started.md);
 > diese Seite ergänzt sie um deutsche Hinweise und die Stolperstellen, die mir beim Aufbau
@@ -206,8 +206,14 @@ Nach einem **Neustart von Home Assistant** springt die Wake-Word-Auswahl mancher
 *Wake Word → Pipeline*, und alles läuft auf der **ersten** Pipeline. Das betrifft vor allem, wenn man
 pro Dot zwei Assistenten mit verschiedenen Pipelines nutzt.
 
-Gemeldet ist das als [techo5-dot#51](https://github.com/HuskerMinion/techo5-dot/issues/51). Bis es
-behoben ist, setzt eine Automation die Auswahl nach dem Start zurück:
+Gemeldet ist das als [techo5-dot#51](https://github.com/HuskerMinion/techo5-dot/issues/51) (offen, Stand 19.11.2026).
+HuskerMinion hat geantwortet: Ein Reload der ESPHome-Integration behielt bei ihm beide
+Wake-Word-Slots korrekt – der vollständige HA-Neustart scheint einen anderen Pfad zu nehmen.
+Er bittet um Debug-Logs: `homeassistant.components.esphome` auf Debug setzen, HA neu starten
+und die Zeilen zu „satellite configuration“ für einen Dot anhängen, zusammen mit dem TECHO5-Log
+(`/data/techo5-linux/techo5.log`) aus denselben Minuten.
+
+Bis das behoben ist, setzt eine Automation die Auswahl nach dem Start zurück:
 [`ha/wake-word-nach-neustart.yaml`](ha/wake-word-nach-neustart.yaml). Sie sollte irgendwann
 überflüssig werden.
 
