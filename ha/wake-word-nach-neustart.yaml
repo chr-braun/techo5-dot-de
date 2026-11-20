@@ -1,12 +1,23 @@
-# Workaround für https://github.com/HuskerMinion/techo5-dot/issues/51
-# Nach einem Home-Assistant-Neustart steht die Wake-Word-Auswahl mancher Dots auf "no_wake_word".
-# Diese Automation setzt sie vier Minuten nach dem Start wieder, wenn sie abweicht.
+# Workaround für:
+#   https://github.com/HuskerMinion/techo5-dot/issues/51  (Wake Word nach HA-Neustart zurückgesetzt)
+#   https://github.com/HuskerMinion/techo5/issues/657      (Wake Word nach Firmware-Update zurückgesetzt)
 #
-# ANPASSEN: Entity-IDs ("select.<name>_wake_word" o. ä. - bei deutscher HA-Oberfläche z. B.
-# "select.<name>_aktivierungswort") und das gewünschte Wake Word je Dot.
-# Pausen zwischen den Schritten sind Absicht: gleichzeitige Änderungen am selben Gerät
-# überschreiben sich gegenseitig.
-alias: "Dots: Wake-Words nach HA-Neustart wiederherstellen"
+# Nach einem Home-Assistant-Neustart ODER einem TECHO5-Firmware-Update stehen die
+# Aktivierungswort-Selects mancher Dots auf "No wake word" / "unavailable".
+# Diese Automation wartet vier Minuten nach dem HA-Start und setzt sie zurück, wenn sie abweichen.
+#
+# ANPASSEN:
+#   - "sel": Entity-ID des Aktivierungswort-Selects deines Dots.
+#     Bei deutschsprachiger HA-Oberfläche heißt es "select.<name>_aktivierungswort"
+#     (Wort 1) bzw. "select.<name>_aktivierungswort_2" (Wort 2).
+#     Bei englischer Oberfläche evtl. "select.<name>_wake_word" / "select.<name>_wake_word_2".
+#   - "wort": Das gewünschte Aktivierungswort, exakt wie es im Select steht,
+#     z. B. "Okay Nabu", "Hey Jarvis", "Hey Mycroft", "Alexa".
+#
+# Pausen zwischen den Schritten sind Absicht: gleichzeitige Schreibzugriffe auf
+# dasselbe Gerät können sich gegenseitig überschreiben.
+
+alias: "Dots: Aktivierungswörter nach HA-Neustart wiederherstellen"
 mode: single
 triggers:
   - trigger: homeassistant
@@ -15,11 +26,13 @@ actions:
   - delay: "00:04:00"
   - repeat:
       for_each:
-        - { sel: select.dot_wohnzimmer_wake_word,   wort: "Okay Nabu" }
-        - { sel: select.dot_wohnzimmer_wake_word_2, wort: "Hey Jarvis" }
-        - { sel: select.dot_kueche_wake_word,       wort: "Hey Jarvis" }
+        - { sel: select.wohnzimmer_aktivierungswort,   wort: "Okay Nabu" }
+        - { sel: select.wohnzimmer_aktivierungswort_2, wort: "Hey Jarvis" }
+        - { sel: select.matilda_dot_aktivierungswort,  wort: "Hey Jarvis" }
+        - { sel: select.finiandot_aktivierungswort,    wort: "Hey Jarvis" }
+        - { sel: select.finiandot_aktivierungswort_2,  wort: "Okay Nabu" }
       sequence:
-        - if: "{{ states(repeat.item.sel) != repeat.item.wort }}"
+        - if: "{{ states(repeat.item.sel) not in [repeat.item.wort] }}"
           then:
             - action: select.select_option
               target:

@@ -23,7 +23,7 @@ ohne Amazon-Cloud, ohne Alexa.
 3. [Der Weg in sieben Schritten](#3-der-weg-in-sieben-schritten)
 4. [In Home Assistant einrichten (Deutsch!)](#4-in-home-assistant-einrichten-deutsch)
 5. [Mikrofone](#5-mikrofone)
-6. [Bekanntes Problem: Wake Word nach HA-Neustart](#6-bekanntes-problem-wake-word-nach-ha-neustart)
+6. [Bekanntes Problem: Wake Word nach HA-Neustart oder Firmware-Update](#6-bekanntes-problem-wake-word-nach-ha-neustart-oder-firmware-update)
 7. [Neue Funktionen in v1.0.73](#7-neue-funktionen-in-v1073)
 8. [Wenn etwas nicht klappt](#8-wenn-etwas-nicht-klappt)
 9. [Quellen und Dank](#9-quellen-und-dank)
@@ -200,24 +200,36 @@ das Center-Mikrofon allein. Hintergrund: Issue
 
 Wer noch auf *Center mic* steht und leise Aufnahmen hat, stellt auf *All microphones* zurück.
 
-## 6. Bekanntes Problem: Wake Word nach HA-Neustart
+## 6. Bekanntes Problem: Wake Word nach HA-Neustart oder Firmware-Update
 
-Nach einem **Neustart von Home Assistant** springt die Wake-Word-Auswahl mancher Dots auf
-`no_wake_word`. Das Gerät behält sein Wake Word, aber Home Assistant verliert die Zuordnung
-*Wake Word → Pipeline*, und alles läuft auf der **ersten** Pipeline. Das betrifft vor allem, wenn man
-pro Dot zwei Assistenten mit verschiedenen Pipelines nutzt.
+Es gibt zwei verwandte, aber unterschiedliche Bugs:
 
-Gemeldet ist das als [techo5-dot#51](https://github.com/HuskerMinion/techo5-dot/issues/51) (offen, Stand 19.11.2026).
-HuskerMinion hat geantwortet: Ein Reload der ESPHome-Integration behielt bei ihm beide
-Wake-Word-Slots korrekt – der vollständige HA-Neustart scheint einen anderen Pfad zu nehmen.
-
-Er bittet um Debug-Logs: `homeassistant.components.esphome` auf Debug setzen, HA neu starten
-und die Zeilen zu „satellite configuration" für einen Dot anhängen, zusammen mit dem TECHO5-Log
+**Bug 1 – nach HA-Neustart** ([techo5-dot#51](https://github.com/HuskerMinion/techo5-dot/issues/51), offen):
+Nach einem Neustart von Home Assistant springt die Aktivierungswort-Auswahl mancher Dots auf
+`no_wake_word`. Das Gerät selbst behält sein Wake Word, aber HA verliert die Zuordnung
+*Wake Word → Pipeline*. Betrifft vor allem Dots mit zwei verschiedenen Pipelines pro Slot.
+HuskerMinion hat es bei sich nicht reproduzieren können – er bittet um Debug-Logs:
+`homeassistant.components.esphome` auf Debug setzen, HA neu starten, die Zeilen zu
+„satellite configuration" für den betroffenen Dot anhängen, dazu das TECHO5-Log
 (`/data/techo5-linux/techo5.log`) aus denselben Minuten.
 
-Bis das behoben ist, setzt eine Automation die Auswahl nach dem Start zurück:
-[`ha/wake-word-nach-neustart.yaml`](ha/wake-word-nach-neustart.yaml). Sie sollte irgendwann
-überflüssig werden.
+**Bug 2 – nach Firmware-Update** ([techo5#657](https://github.com/HuskerMinion/techo5/issues/657), offen):
+Nach einem TECHO5-Firmware-Update (auch per Auto-Update) stehen beide Aktivierungswort-Slots
+auf `No wake word` bzw. `unavailable`. Der Dot-interne Status (Setup-Seite) zeigt noch das
+richtige Wort, aber die HA-Entitäten verlieren es. Tritt nur nach Updates auf, nicht bei
+normalen Neustarts. HuskerMinion hat das bei sich nicht reproduzieren können und bittet um
+Diagnostics (Setup-Seite → Status → Download diagnostics) direkt nach einem Update, bevor
+die Wörter wieder eingestellt werden, sowie um die HA-History der Aktivierungswort-Entitäten.
+
+Beide Bugs lassen sich mit derselben Automation abfangen, die vier Minuten nach dem HA-Start
+prüft ob die Wörter stimmen und sie ggf. zurücksetzt:
+[`ha/wake-word-nach-neustart.yaml`](ha/wake-word-nach-neustart.yaml).
+
+> **Entity-IDs:** Bei deutschsprachiger HA-Oberfläche heißen die Selects
+> `select.<name>_aktivierungswort` und `select.<name>_aktivierungswort_2`.
+> Bei englischer Oberfläche `select.<name>_wake_word` / `select.<name>_wake_word_2`.
+> Die Automation im Repo ist für eine deutsche Oberfläche eingerichtet und muss
+> an die eigenen Gerätenamen angepasst werden.
 
 ## 7. Neue Funktionen in v1.0.73
 
