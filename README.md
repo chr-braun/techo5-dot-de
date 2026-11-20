@@ -1,5 +1,4 @@
 # TECHO5 Dot – Einstieg auf Deutsch (Echo Dot 2. Gen.)
-
 Inoffizielle deutsche Anleitung: vom originalen **Echo Dot 2. Generation (2016, `biscuit`)** zum
 **Home-Assistant-Sprachassistenten** mit [TECHO5 Dot](https://github.com/HuskerMinion/techo5-dot) –
 ohne Amazon-Cloud, ohne Alexa.
@@ -25,8 +24,9 @@ ohne Amazon-Cloud, ohne Alexa.
 4. [In Home Assistant einrichten (Deutsch!)](#4-in-home-assistant-einrichten-deutsch)
 5. [Mikrofone](#5-mikrofone)
 6. [Bekanntes Problem: Wake Word nach HA-Neustart](#6-bekanntes-problem-wake-word-nach-ha-neustart)
-7. [Wenn etwas nicht klappt](#7-wenn-etwas-nicht-klappt)
-8. [Quellen und Dank](#8-quellen-und-dank)
+7. [Neue Funktionen in v1.0.73](#7-neue-funktionen-in-v1073)
+8. [Wenn etwas nicht klappt](#8-wenn-etwas-nicht-klappt)
+9. [Quellen und Dank](#9-quellen-und-dank)
 
 ---
 
@@ -51,7 +51,7 @@ die Android-Platform-Tools (`adb`, `fastboot`) und `git`.
 |--------|--------------|
 | **macOS** | `xcode-select --install`, dann `brew install android-platform-tools` |
 | **Linux** (Ubuntu/Debian) | `sudo apt install python3 git adb fastboot`, `sudo usermod -aG dialout $USER`, neu anmelden. Falls ModemManager läuft: `sudo systemctl stop ModemManager` |
-| **Windows** | [Python 3](https://www.python.org/downloads/) („Add python.exe to PATH“ anhaken), [Git for Windows](https://git-scm.com/download/win), [Platform-Tools](https://developer.android.com/tools/releases/platform-tools) entpacken und in den PATH. Statt `python3` gilt `python`. |
+| **Windows** | [Python 3](https://www.python.org/downloads/) („Add python.exe to PATH" anhaken), [Git for Windows](https://git-scm.com/download/win), [Platform-Tools](https://developer.android.com/tools/releases/platform-tools) entpacken und in den PATH. Statt `python3` gilt `python`. |
 
 Test: `python3 --version` und `adb version`.
 
@@ -105,7 +105,7 @@ adb shell twrp install /sdcard/update.zip
 ```
 
 Zweimal installieren heißt: in **beide** A/B-Slots. Erscheint im Log *„no selinux policy
-bundled“*, passt der Build nicht – **abbrechen** und die richtige Datei holen.
+bundled"*, passt der Build nicht – **abbrechen** und die richtige Datei holen.
 
 ### Schritt 3 – Root
 
@@ -147,9 +147,9 @@ python3 tools/install-dot.py
 
 Der Trockenlauf sichert **alle Boot-Partitionen** nach `backups/<Seriennummer>/`. **Diesen Ordner
 unbedingt aufbewahren**, er ist der Weg zurück und enthält auch den Home-Assistant-Schlüssel. Der
-zweite Lauf installiert und wartet, bis der erste Start „healthy“ meldet.
+zweite Lauf installiert und wartet, bis der erste Start „healthy" meldet.
 
-✅ Prüfung: Der Installer endet mit „healthy“, und der Home-Assistant-Port antwortet.
+✅ Prüfung: Der Installer endet mit „healthy", und der Home-Assistant-Port antwortet.
 
 ### Schritt 7 – In Home Assistant hinzufügen
 
@@ -161,7 +161,7 @@ Siehe nächstes Kapitel.
    Dienste). Den **Verschlüsselungsschlüssel** einfügen, den der Installer ausgegeben hat (auch in
    `backups/<Seriennummer>/home-assistant.key`).
 2. **Aktionen erlauben:** Beim ESPHome-Eintrag → Konfigurieren: **„Allow the device to perform Home
-   Assistant actions“** einschalten.
+   Assistant actions"** einschalten.
 3. **Wake Word wählen** am Assist-Satelliten: Okay Nabu, Hey Jarvis, Hey Mycroft, Alexa und weitere.
    Die ersten vier sind die leichten.
 4. **Updates** kommen danach über die Update-Karte in HA (signiert, mit automatischem Rollback).
@@ -173,13 +173,13 @@ Damit der Dot **deutsch spricht**, muss die Sprachpipeline stimmen (Einstellunge
 - **Sprache der Pipeline:** Deutsch.
 - **Text-zu-Sprache:** Piper mit einer deutschen Stimme.
 - **TTS-Sprache `de_DE`** (mit Region), **nicht** die Kurzform `de`. Bei mir kam mit `de` von Piper
-  ein „nicht unterstützt“-Fehler, und es wurde **nichts gesprochen**. (Das ist meine Erfahrung mit
+  ein „nicht unterstützt"-Fehler, und es wurde **nichts gesprochen**. (Das ist meine Erfahrung mit
   Piper in Home Assistant; ob die Kurzform bei jeder Konstellation scheitert, habe ich nicht geprüft.)
 
 **Er hört, antwortet aber nicht laut?** Das liegt fast immer an der Pipeline, nicht am Gerät:
 
 1. Einstellungen → Sprachassistenten → die Pipeline öffnen, die der Dot nutzt.
-2. Bei **Text-zu-Sprache** prüfen: steht dort *Keine*, eine Engine wählen (Piper), „Aktualisieren“.
+2. Bei **Text-zu-Sprache** prüfen: steht dort *Keine*, eine Engine wählen (Piper), „Aktualisieren".
 3. Test: Entwicklerwerkzeuge → Aktionen → `tts.speak` mit deiner TTS-Entität und der
    Media-Player-Entität des Dots.
    - Spricht er, liegt es an der Pipeline.
@@ -197,6 +197,7 @@ Lautsprechers heraus; das ist die Standardeinstellung (Auswahl **Mix** in Home A
 *All microphones*). In den Messungen des Projekts war der Durchschnitt in jeder Aufnahme besser als
 das Center-Mikrofon allein. Hintergrund: Issue
 [#46](https://github.com/HuskerMinion/techo5-dot/issues/46) und PR #48, beides inzwischen behoben.
+
 Wer noch auf *Center mic* steht und leise Aufnahmen hat, stellt auf *All microphones* zurück.
 
 ## 6. Bekanntes Problem: Wake Word nach HA-Neustart
@@ -209,26 +210,88 @@ pro Dot zwei Assistenten mit verschiedenen Pipelines nutzt.
 Gemeldet ist das als [techo5-dot#51](https://github.com/HuskerMinion/techo5-dot/issues/51) (offen, Stand 19.11.2026).
 HuskerMinion hat geantwortet: Ein Reload der ESPHome-Integration behielt bei ihm beide
 Wake-Word-Slots korrekt – der vollständige HA-Neustart scheint einen anderen Pfad zu nehmen.
+
 Er bittet um Debug-Logs: `homeassistant.components.esphome` auf Debug setzen, HA neu starten
-und die Zeilen zu „satellite configuration“ für einen Dot anhängen, zusammen mit dem TECHO5-Log
+und die Zeilen zu „satellite configuration" für einen Dot anhängen, zusammen mit dem TECHO5-Log
 (`/data/techo5-linux/techo5.log`) aus denselben Minuten.
 
 Bis das behoben ist, setzt eine Automation die Auswahl nach dem Start zurück:
 [`ha/wake-word-nach-neustart.yaml`](ha/wake-word-nach-neustart.yaml). Sie sollte irgendwann
 überflüssig werden.
 
-## 7. Wenn etwas nicht klappt
+## 7. Neue Funktionen in v1.0.73
+
+[Release dot-v1.0.73](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.73) vom 19.11.2026 bringt mehrere nützliche Ergänzungen:
+
+### Action-Taste: Doppel- und Dreifachdruck
+
+Home Assistant bekommt jetzt `double_press` und `triple_press` als Ereignisse, nicht mehr nur
+`press`. Jeder Tastendruck sendet `press` sofort; bei zwei oder drei schnellen Drücken folgt danach
+das jeweilige Mehrfach-Ereignis. So lassen sich verschiedene Aktionen auf dieselbe Taste legen –
+zum Beispiel einmal drücken für Licht an/aus, zweimal für eine Szene.
+
+### rc.local – eigene Skripte beim Start
+
+Ein ausführbares Skript unter `/data/techo5-linux/rc.local` wird am Ende jedes Boots gestartet,
+so wie es bei den Echo Shows schon funktioniert. Das Skript überlebt Updates. Es eignet sich für
+alles, was dauerhaft auf dem Gerät laufen soll – ein kleiner Hilfsdienst, eine statische IP, ein
+Alias. Dokumentation: [Running something of your own at boot](https://github.com/HuskerMinion/techo5/blob/main/docs/setup.md#running-something-of-your-own-at-boot).
+
+### Timer-Sensoren
+
+Zwei neue Sensoren zeigen den nächsten ablaufenden Timer:
+
+| Entität | Beschreibung |
+|---------|--------------|
+| `sensor.<dot>_next_timer_ends` | Zeitstempel, wann der nächste Timer abläuft |
+| `sensor.<dot>_next_timer` | Verbleibende Zeit als lesbare Angabe |
+
+Nützlich für Dashboard-Karten oder Automationen, die auf laufende Timer reagieren sollen.
+
+### notify_clear
+
+Mit der Aktion `notify_clear` lässt sich eine Benachrichtigung vor Ablauf ihrer Zeit entfernen,
+wenn ihr beim Senden ein `tag` mitgegeben wurde:
+
+```yaml
+action: notify.dot_wohnzimmer
+data:
+  message: "Waschmaschine fertig"
+  data:
+    tag: waschmaschine
+```
+
+```yaml
+action: notify.dot_wohnzimmer_clear   # oder notify_clear-Aktion, je nach HA-Version
+data:
+  data:
+    tag: waschmaschine
+```
+
+### Radio-Fix
+
+Sendet Music Assistant eine Station, die der Dot selbst nicht decodieren kann (z. B. ein Format,
+das er an den Lautsprecher weiterreicht), läuft sie jetzt durch, statt nach einer Sekunde zu stoppen.
+
+### Saubere Antwortanzeige
+
+Stimmhinweise in eckigen Klammern – etwa `[flüstert]` oder `[lacht]` aus einer LLM-Antwort –
+erscheinen nicht mehr in der Entität „Last reply". Die Sprachausgabe selbst ist unverändert.
+
+---
+
+## 8. Wenn etwas nicht klappt
 
 - **Vor der TECHO5-Installation:** Im XDA-Thread gibt es einen Unbrick-Abschnitt. **Nicht mit
   Bootloader-Images herumprobieren**, so werden Echos endgültig unbrauchbar.
 - **Danach:** Der Dot fällt auf den vorherigen Slot und dann in eine Rettungsumgebung mit
-  USB-Seriell-Konsole zurück, wenn ein Start nicht „healthy“ wird.
+  USB-Seriell-Konsole zurück, wenn ein Start nicht „healthy" wird.
 - **Installer meldet Prüfsummenfehler:** Der Download wird einmal wiederholt. Passt die Byte-Zahl
   nicht zur Release-Seite, ist die Verbindung abgebrochen (weniger) oder Virenscanner/Proxy haben die
   Datei verändert (gleiche Zahl).
 - **Fehler melden:** In den GitHub-Issues des Projekts, mit Gerät, Schritt und Ausgabe.
 
-## 8. Quellen und Dank
+## 9. Quellen und Dank
 
 Diese Seite fasst die Arbeit anderer zusammen und ergänzt sie. Alles Wesentliche stammt von:
 
