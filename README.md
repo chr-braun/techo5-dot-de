@@ -3,7 +3,7 @@ Inoffizielle deutsche Anleitung: vom originalen **Echo Dot 2. Generation (2016, 
 **Home-Assistant-Sprachassistenten** mit [TECHO5 Dot](https://github.com/HuskerMinion/techo5-dot) –
 ohne Amazon-Cloud, ohne Alexa.
 
-> **Stand:** TECHO5 Dot **v1.0.73**, Home Assistant 2026.11, ESPHome 2026.5.
+> **Stand:** TECHO5 Dot **v1.0.74**, Home Assistant 2026.11, ESPHome 2026.5.
 > TECHO5 ändert sich fast wöchentlich. Maßgeblich ist immer die
 > [englische Anleitung](https://github.com/HuskerMinion/techo5/blob/main/docs/getting-started.md);
 > diese Seite ergänzt sie um deutsche Hinweise und die Stolperstellen, die mir beim Aufbau
@@ -24,7 +24,7 @@ ohne Amazon-Cloud, ohne Alexa.
 4. [In Home Assistant einrichten (Deutsch!)](#4-in-home-assistant-einrichten-deutsch)
 5. [Mikrofone](#5-mikrofone)
 6. [Bekanntes Problem: Wake Word nach HA-Neustart oder Firmware-Update](#6-bekanntes-problem-wake-word-nach-ha-neustart-oder-firmware-update)
-7. [Neue Funktionen in v1.0.73](#7-neue-funktionen-in-v1073)
+7. [Neue Funktionen in v1.0.74](#7-neue-funktionen-in-v1074)
 8. [Wenn etwas nicht klappt](#8-wenn-etwas-nicht-klappt)
 9. [Quellen und Dank](#9-quellen-und-dank)
 
@@ -213,13 +213,12 @@ HuskerMinion hat es bei sich nicht reproduzieren können – er bittet um Debug-
 „satellite configuration" für den betroffenen Dot anhängen, dazu das TECHO5-Log
 (`/data/techo5-linux/techo5.log`) aus denselben Minuten.
 
-**Bug 2 – nach Firmware-Update** ([techo5#657](https://github.com/HuskerMinion/techo5/issues/657), offen):
-Nach einem TECHO5-Firmware-Update (auch per Auto-Update) stehen beide Aktivierungswort-Slots
-auf `No wake word` bzw. `unavailable`. Der Dot-interne Status (Setup-Seite) zeigt noch das
-richtige Wort, aber die HA-Entitäten verlieren es. Tritt nur nach Updates auf, nicht bei
-normalen Neustarts. HuskerMinion hat das bei sich nicht reproduzieren können und bittet um
-Diagnostics (Setup-Seite → Status → Download diagnostics) direkt nach einem Update, bevor
-die Wörter wieder eingestellt werden, sowie um die HA-History der Aktivierungswort-Entitäten.
+**Bug 2 – nach Firmware-Update** ([techo5#657](https://github.com/HuskerMinion/techo5/issues/657), **behoben in v1.0.74**):
+Nach einem TECHO5-Firmware-Update standen beide Aktivierungswort-Slots auf `No wake word` bzw.
+`unavailable`. Der Fix ist in v1.0.74 enthalten: Das Gerät liest seine gespeicherten Modelle und
+die gewählten Wörter neu ein, sobald Home Assistant danach fragt – die Slots bleiben beim Update
+erhalten. Wer noch auf einer älteren Version läuft und diesen Bug trifft, schützt sich mit der
+Automation unten, bis das Update eingespielt ist.
 
 Beide Bugs lassen sich mit derselben Automation abfangen, die vier Minuten nach dem HA-Start
 prüft ob die Wörter stimmen und sie ggf. zurücksetzt:
@@ -231,64 +230,45 @@ prüft ob die Wörter stimmen und sie ggf. zurücksetzt:
 > Die Automation im Repo ist für eine deutsche Oberfläche eingerichtet und muss
 > an die eigenen Gerätenamen angepasst werden.
 
-## 7. Neue Funktionen in v1.0.73
+## 7. Neue Funktionen in v1.0.74
 
-[Release dot-v1.0.73](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.73) vom 19.11.2026 bringt mehrere nützliche Ergänzungen:
+[Release dot-v1.0.74](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.74) vom 21.11.2026 bringt mehrere nützliche Ergänzungen:
 
-### Action-Taste: Doppel- und Dreifachdruck
+### Wecker mit Musik
 
-Home Assistant bekommt jetzt `double_press` und `triple_press` als Ereignisse, nicht mehr nur
-`press`. Jeder Tastendruck sendet `press` sofort; bei zwei oder drei schnellen Drücken folgt danach
-das jeweilige Mehrfach-Ereignis. So lassen sich verschiedene Aktionen auf dieselbe Taste legen –
-zum Beispiel einmal drücken für Licht an/aus, zweimal für eine Szene.
+Ein Alarm kann jetzt mit einer Radio-Station oder einem Music-Assistant-Favoriten wecken, nicht nur
+mit einem Ton. Die Musik startet mit der Wecker-Lautstärke; Snooze setzt sie genau dort fort, wo
+sie gestoppt wurde. Spielt die Musik nicht an, greift der normale Weckton als Fallback.
 
-### rc.local – eigene Skripte beim Start
+Einzurichten über die Aktion `alarm_wake_with` oder (bei den Echo Shows) direkt im Alarm-Editor
+unter **Wake with**. Der HA-Schalter **Wake light minutes** setzt die Standardzeit für das
+Aufwachlicht.
 
-Ein ausführbares Skript unter `/data/techo5-linux/rc.local` wird am Ende jedes Boots gestartet,
-so wie es bei den Echo Shows schon funktioniert. Das Skript überlebt Updates. Es eignet sich für
-alles, was dauerhaft auf dem Gerät laufen soll – ein kleiner Hilfsdienst, eine statische IP, ein
-Alias. Dokumentation: [Running something of your own at boot](https://github.com/HuskerMinion/techo5/blob/main/docs/setup.md#running-something-of-your-own-at-boot).
+### Wake Words bleiben beim Update erhalten ✅
 
-### Timer-Sensoren
+Nach einem Firmware-Update standen bisher beide Aktivierungswort-Slots manchmal auf
+„No wake word" oder „unavailable", bis das Gerät neu gestartet wurde
+([techo5#657](https://github.com/HuskerMinion/techo5/issues/657)). Das Gerät liest seine
+Modelle und die gespeicherten Wörter jetzt neu ein, sobald Home Assistant danach fragt.
+Der Bug ist damit behoben.
 
-Zwei neue Sensoren zeigen den nächsten ablaufenden Timer:
+### Wake Words aus dem Home-Assistant-Ordner
 
-| Entität | Beschreibung |
-|---------|--------------|
-| `sensor.<dot>_next_timer_ends` | Zeitstempel, wann der nächste Timer abläuft |
-| `sensor.<dot>_next_timer` | Verbleibende Zeit als lesbare Angabe |
+Wake Words, die im `custom_wake_words`-Ordner von Home Assistant liegen, werden jetzt auch gehört –
+zusätzlich zu demselben Wort, das über die Setup-Seite geladen wurde.
 
-Nützlich für Dashboard-Karten oder Automationen, die auf laufende Timer reagieren sollen.
+### Nächstes Gerät: kein doppelter Aufruf
 
-### notify_clear
+Reagierten zwei Geräte auf dasselbe Wake Word, öffnete sich auf einem zweiten Gerät manchmal ein
+zweiter Gesprächskanal. Das passiert nicht mehr.
 
-Mit der Aktion `notify_clear` lässt sich eine Benachrichtigung vor Ablauf ihrer Zeit entfernen,
-wenn ihr beim Senden ein `tag` mitgegeben wurde:
+### NetBird: integrierter Client entfernt → Add-on
 
-```yaml
-action: notify.dot_wohnzimmer
-data:
-  message: "Waschmaschine fertig"
-  data:
-    tag: waschmaschine
-```
-
-```yaml
-action: notify.dot_wohnzimmer_clear   # oder notify_clear-Aktion, je nach HA-Version
-data:
-  data:
-    tag: waschmaschine
-```
-
-### Radio-Fix
-
-Sendet Music Assistant eine Station, die der Dot selbst nicht decodieren kann (z. B. ein Format,
-das er an den Lautsprecher weiterreicht), läuft sie jetzt durch, statt nach einer Sekunde zu stoppen.
-
-### Saubere Antwortanzeige
-
-Stimmhinweise in eckigen Klammern – etwa `[flüstert]` oder `[lacht]` aus einer LLM-Antwort –
-erscheinen nicht mehr in der Entität „Last reply". Die Sprachausgabe selbst ist unverändert.
+Der eingebaute NetBird-Client ist entfernt. An seiner Stelle tritt
+[tioan's techo5-netbird Add-on](https://github.com/tioan/techo5-netbird), das die bestehende
+Verbindung übernimmt. **Wer NetBird nutzt**, sollte das Add-on installieren, bevor oder direkt
+nachdem das Update eingespielt wird. Die alten NetBird-Entitäten (Switch, Status) in Home
+Assistant zeigen danach „unavailable" – diese Entitäten können dort gelöscht werden.
 
 ---
 
