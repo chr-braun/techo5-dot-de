@@ -3,7 +3,7 @@ Inoffizielle deutsche Anleitung: vom originalen **Echo Dot 2. Generation (2016, 
 **Home-Assistant-Sprachassistenten** mit [TECHO5 Dot](https://github.com/HuskerMinion/techo5-dot) –
 ohne Amazon-Cloud, ohne Alexa.
 
-> **Stand:** TECHO5 Dot **v1.0.74**, Home Assistant 2026.11, ESPHome 2026.5.
+> **Stand:** TECHO5 Dot **v1.0.78** (23.11.2026), Home Assistant 2026.11, ESPHome 2026.5.
 > TECHO5 ändert sich fast wöchentlich. Maßgeblich ist immer die
 > [englische Anleitung](https://github.com/HuskerMinion/techo5/blob/main/docs/getting-started.md);
 > diese Seite ergänzt sie um deutsche Hinweise und die Stolperstellen, die mir beim Aufbau
@@ -24,7 +24,7 @@ ohne Amazon-Cloud, ohne Alexa.
 4. [In Home Assistant einrichten (Deutsch!)](#4-in-home-assistant-einrichten-deutsch)
 5. [Mikrofone](#5-mikrofone)
 6. [Bekanntes Problem: Wake Word nach HA-Neustart oder Firmware-Update](#6-bekanntes-problem-wake-word-nach-ha-neustart-oder-firmware-update)
-7. [Neue Funktionen in v1.0.74](#7-neue-funktionen-in-v1074)
+7. [Neue Funktionen (v1.0.74 bis v1.0.78)](#7-neue-funktionen-v1074-bis-v1078)
 8. [Wenn etwas nicht klappt](#8-wenn-etwas-nicht-klappt)
 9. [Quellen und Dank](#9-quellen-und-dank)
 
@@ -204,14 +204,13 @@ Wer noch auf *Center mic* steht und leise Aufnahmen hat, stellt auf *All microph
 
 Es gibt zwei verwandte, aber unterschiedliche Bugs:
 
-**Bug 1 – nach HA-Neustart** ([techo5-dot#51](https://github.com/HuskerMinion/techo5-dot/issues/51), offen):
-Nach einem Neustart von Home Assistant springt die Aktivierungswort-Auswahl mancher Dots auf
-`no_wake_word`. Das Gerät selbst behält sein Wake Word, aber HA verliert die Zuordnung
-*Wake Word → Pipeline*. Betrifft vor allem Dots mit zwei verschiedenen Pipelines pro Slot.
-HuskerMinion hat es bei sich nicht reproduzieren können – er bittet um Debug-Logs:
-`homeassistant.components.esphome` auf Debug setzen, HA neu starten, die Zeilen zu
-„satellite configuration" für den betroffenen Dot anhängen, dazu das TECHO5-Log
-(`/data/techo5-linux/techo5.log`) aus denselben Minuten.
+**Bug 1 – nach HA-Neustart** ([techo5-dot#51](https://github.com/HuskerMinion/techo5-dot/issues/51), **behoben in v1.0.74**, am 21.11.2026 geschlossen):
+Nach einem Neustart von Home Assistant sprang die Aktivierungswort-Auswahl mancher Dots auf
+`no_wake_word`. Das Gerät selbst behielt sein Wake Word, aber HA verlor die Zuordnung
+*Wake Word → Pipeline*. HuskerMinion hat festgestellt, dass der Verlust auf diesem Weg
+(Slots leer, danach schickt HA nur noch das, was seine Auswahlfelder halten) von demselben Fehler
+kam wie Bug 2. Der Fix aus v1.0.74 deckt deshalb beide Fälle ab. Springt das Wake Word nach einem
+HA-Neustart trotzdem wieder zurück, das Issue bitte wieder öffnen.
 
 **Bug 2 – nach Firmware-Update** ([techo5#657](https://github.com/HuskerMinion/techo5/issues/657), **behoben in v1.0.74**):
 Nach einem TECHO5-Firmware-Update standen beide Aktivierungswort-Slots auf `No wake word` bzw.
@@ -220,8 +219,9 @@ die gewählten Wörter neu ein, sobald Home Assistant danach fragt – die Slots
 erhalten. Wer noch auf einer älteren Version läuft und diesen Bug trifft, schützt sich mit der
 Automation unten, bis das Update eingespielt ist.
 
-Beide Bugs lassen sich mit derselben Automation abfangen, die vier Minuten nach dem HA-Start
-prüft ob die Wörter stimmen und sie ggf. zurücksetzt:
+Auf **v1.0.74 oder neuer** sollte keine Automation mehr nötig sein. Wer noch eine ältere Version
+nutzt oder als Absicherung eine haben möchte: Diese Automation prüft vier Minuten nach dem
+HA-Start, ob die Wörter stimmen, und setzt sie ggf. zurück:
 [`ha/wake-word-nach-neustart.yaml`](ha/wake-word-nach-neustart.yaml).
 
 > **Entity-IDs:** Bei deutschsprachiger HA-Oberfläche heißen die Selects
@@ -230,11 +230,90 @@ prüft ob die Wörter stimmen und sie ggf. zurücksetzt:
 > Die Automation im Repo ist für eine deutsche Oberfläche eingerichtet und muss
 > an die eigenen Gerätenamen angepasst werden.
 
-## 7. Neue Funktionen in v1.0.74
+## 7. Neue Funktionen (v1.0.74 bis v1.0.78)
+
+TECHO5 Dot erscheint fast täglich in neuen Versionen. Hier steht, was seit v1.0.73 für den
+Echo Dot 2. Gen. dazugekommen ist (Stand 23.11.2026). Vollständig und verbindlich sind die
+[Release-Notizen auf GitHub](https://github.com/HuskerMinion/techo5-dot/releases) (Englisch).
+
+> **Update einspielen:** In Home Assistant über die Update-Karte des Dots (Auto-Update ist
+> standardmäßig aus). Danach kurz prüfen, ob beide Aktivierungswörter noch gesetzt sind.
+
+### v1.0.78 (23.11.2026)
+
+[Release dot-v1.0.78](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.78):
+
+- **Helligkeit:** Der Dot meldet die Raumhelligkeit an Home Assistant, sobald sie sich ändert, und
+  nicht mehr nur alle fünf Minuten. Ändert sich das Licht ständig (z. B. durch einen Fernseher),
+  kommt höchstens alle 15 Sekunden ein Wert ([techo5-dot#54](https://github.com/HuskerMinion/techo5-dot/issues/54)).
+- **Antworten auf einem anderen Lautsprecher:** Steht **Reply delivery** auf *Early*, markierte
+  eine abgebrochene Antwort die nächste fälschlich als „auf dem anderen Lautsprecher gespielt".
+  Das ist behoben.
+- **Stopp-Wort:** Das Log vermerkt, wenn die Antwort auf einem anderen Lautsprecher lief
+  ([#709](https://github.com/HuskerMinion/techo5/issues/709), [#710](https://github.com/HuskerMinion/techo5/issues/710)).
+
+### v1.0.77 (23.11.2026)
+
+[Release dot-v1.0.77](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.77):
+
+- **Frühe Antworten auf einem anderen Lautsprecher:** Mit **Reply delivery** = *Early* beginnt die
+  Wiedergabe auf dem anderen Media Player schon, während der Agent noch schreibt, statt erst
+  nach der kompletten Antwort. Wird die Runde gestoppt, stoppt sie dort auch
+  ([#707](https://github.com/HuskerMinion/techo5/issues/707)).
+- **Nächstes Gerät antwortet:** Ein von Home Assistant bestätigtes Wake Word zählt jetzt bei der
+  Entscheidung mit, welches Gerät antwortet – in beide Richtungen. Ein weiter entferntes Gerät
+  antwortet dadurch nicht mehr mit ([#685](https://github.com/HuskerMinion/techo5/issues/685)).
+- **Room floor** (Ruhepegel des Raums) folgt dem tatsächlichen Raum und klebt nicht mehr an der
+  alten Untergrenze ([#377](https://github.com/HuskerMinion/techo5/issues/377)).
+- **„Let in from Home Assistant"** funktioniert auch für einen Browser im Heimnetz mit geöffneter
+  Setup-Seite, ohne dass **Remote setup** eingeschaltet sein muss.
+- **„Leave Home Assistant"** vergisst jetzt auch die Sendspin-Identität und das Pairing-Token,
+  das der Music Assistant des alten Besitzers bekommen hatte. Wichtig, wenn ein Dot den
+  Besitzer oder die HA-Instanz wechselt.
+
+### v1.0.76 (22.11.2026)
+
+[Release dot-v1.0.76](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.76):
+
+- **Music Assistant – verschlüsseltes Sendspin:** Die Verbindung ist jetzt verschlüsselt (wie in
+  der Sendspin-1.0-Spezifikation), das Pairing läuft von selbst: Home Assistant gibt Music
+  Assistant das Pairing-Token des Dots. Voraussetzungen für das automatische Pairing:
+  **Home Assistant 2026.11 oder neuer** und ein **API-Verschlüsselungsschlüssel** am Dot. Das Token
+  steht auch auf der Setup-Seite unter *Music Assistant*, falls man manuell koppeln will.
+  Ein Dot mit eingerichtetem Music Assistant wählt diesen zuerst, ein Dot hinter einem VPN spielt
+  deshalb schon Sekunden nach dem Start ([#679](https://github.com/HuskerMinion/techo5/issues/679)).
+  **Music Assistant 2.10** zeigt nach der ersten verschlüsselten Verbindung einen **zweiten Player**
+  für den Dot – den alten, nicht verfügbaren Player einfach löschen
+  ([music-assistant/support#7199](https://github.com/music-assistant/support/issues/7199)).
+- **Kritische Benachrichtigungen:** `notify_critical` klingelt auch nachts und in den Ruhezeiten
+  mit eigener Lautstärke, bis das Stopp-Wort oder die Aktionstaste es beendet. Solange es klingelt,
+  ist der Sensor **Sounding** an; das Stopp-Wort oder **Stop alarm or timer** beendet es. Der
+  einfache Gong nimmt jetzt ebenfalls eine `volume` an ([#686](https://github.com/HuskerMinion/techo5/issues/686), [#687](https://github.com/HuskerMinion/techo5/issues/687)).
+- **WLAN:** Der Watchdog las bei jedem Wiederverbinden das gesamte Kernel-Log; das kostete die
+  Mikrofone etwa 16 ms Audio. Er folgt dem Log jetzt fortlaufend, dadurch gehen beim
+  Wiederverbinden keine Audiodaten mehr verloren ([#690](https://github.com/HuskerMinion/techo5/issues/690)).
+- **Wake Word:** Fällt das Modell eines Wake Words bei Live-Audio aus, wird es von selbst wieder
+  eingesetzt. Der neue Sensor **Wake word problem** nennt den Grund, wenn ein gewähltes Wake Word
+  nicht zuhört (z. B. ein Modell, das der Dot ablehnt) ([#692](https://github.com/HuskerMinion/techo5/issues/692)).
+
+### v1.0.75 (21.11.2026)
+
+[Release dot-v1.0.75](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.75):
+
+- **Stimme:** Mit eingeschalteter **Microphone noise reduction** wurden die ruhigen Momente einer
+  Anfrage zu reiner digitaler Stille, das Gerät hörte „Lücken" zwischen den Wörtern. Die
+  Rauschminderung senkt einen ruhigen Raum jetzt um die beabsichtigten 20 dB (vorher 40) ab
+  ([#662](https://github.com/HuskerMinion/techo5/issues/662)).
+- **Home Assistant:** Bei einem in der Music-Assistant-Bibliothek gespeicherten Titel nennt der
+  Sensor **Now playing source** den echten Dienst (YouTube Music, Spotify …) statt „Library".
+  Dafür braucht das Gerät das Music-Assistant-Token, sonst steht dort „Music Assistant"
+  ([#674](https://github.com/HuskerMinion/techo5/issues/674)).
+
+### v1.0.74 (21.11.2026)
 
 [Release dot-v1.0.74](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.74) vom 21.11.2026 bringt mehrere nützliche Ergänzungen:
 
-### Wecker mit Musik
+#### Wecker mit Musik
 
 Ein Alarm kann jetzt mit einer Radio-Station oder einem Music-Assistant-Favoriten wecken, nicht nur
 mit einem Ton. Die Musik startet mit der Wecker-Lautstärke; Snooze setzt sie genau dort fort, wo
@@ -244,7 +323,7 @@ Einzurichten über die Aktion `alarm_wake_with` oder (bei den Echo Shows) direkt
 unter **Wake with**. Der HA-Schalter **Wake light minutes** setzt die Standardzeit für das
 Aufwachlicht.
 
-### Wake Words bleiben beim Update erhalten ✅
+#### Wake Words bleiben beim Update erhalten ✅
 
 Nach einem Firmware-Update standen bisher beide Aktivierungswort-Slots manchmal auf
 „No wake word" oder „unavailable", bis das Gerät neu gestartet wurde
@@ -252,17 +331,17 @@ Nach einem Firmware-Update standen bisher beide Aktivierungswort-Slots manchmal 
 Modelle und die gespeicherten Wörter jetzt neu ein, sobald Home Assistant danach fragt.
 Der Bug ist damit behoben.
 
-### Wake Words aus dem Home-Assistant-Ordner
+#### Wake Words aus dem Home-Assistant-Ordner
 
 Wake Words, die im `custom_wake_words`-Ordner von Home Assistant liegen, werden jetzt auch gehört –
 zusätzlich zu demselben Wort, das über die Setup-Seite geladen wurde.
 
-### Nächstes Gerät: kein doppelter Aufruf
+#### Nächstes Gerät: kein doppelter Aufruf
 
 Reagierten zwei Geräte auf dasselbe Wake Word, öffnete sich auf einem zweiten Gerät manchmal ein
 zweiter Gesprächskanal. Das passiert nicht mehr.
 
-### NetBird: integrierter Client entfernt → Add-on
+#### NetBird: integrierter Client entfernt → Add-on
 
 Der eingebaute NetBird-Client ist entfernt. An seiner Stelle tritt
 [tioan's techo5-netbird Add-on](https://github.com/tioan/techo5-netbird), das die bestehende
