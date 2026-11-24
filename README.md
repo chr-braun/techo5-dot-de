@@ -3,7 +3,8 @@ Inoffizielle deutsche Anleitung: vom originalen **Echo Dot 2. Generation (2016, 
 **Home-Assistant-Sprachassistenten** mit [TECHO5 Dot](https://github.com/HuskerMinion/techo5-dot) –
 ohne Amazon-Cloud, ohne Alexa.
 
-> **Stand:** TECHO5 Dot **v1.0.78** (23.11.2026), Home Assistant 2026.11, ESPHome 2026.5.
+> **Stand:** TECHO5 Dot **v1.0.80** (24.11.2026), TECHO5-Daemon **v1.6.53**, Home Assistant 2026.11,
+> ESPHome 2026.5. Diese Seite ist seit v1.0.73 auch im englischen Dot-README verlinkt (techo5#637).
 > TECHO5 ändert sich fast wöchentlich. Maßgeblich ist immer die
 > [englische Anleitung](https://github.com/HuskerMinion/techo5/blob/main/docs/getting-started.md);
 > diese Seite ergänzt sie um deutsche Hinweise und die Stolperstellen, die mir beim Aufbau
@@ -24,7 +25,7 @@ ohne Amazon-Cloud, ohne Alexa.
 4. [In Home Assistant einrichten (Deutsch!)](#4-in-home-assistant-einrichten-deutsch)
 5. [Mikrofone](#5-mikrofone)
 6. [Bekanntes Problem: Wake Word nach HA-Neustart oder Firmware-Update](#6-bekanntes-problem-wake-word-nach-ha-neustart-oder-firmware-update)
-7. [Neue Funktionen (v1.0.74 bis v1.0.78)](#7-neue-funktionen-v1074-bis-v1078)
+7. [Neue Funktionen (v1.0.73 bis v1.0.80)](#7-neue-funktionen-v1073-bis-v1080)
 8. [Wenn etwas nicht klappt](#8-wenn-etwas-nicht-klappt)
 9. [Quellen und Dank](#9-quellen-und-dank)
 
@@ -62,8 +63,10 @@ einen Linux-Live-USB-Stick (beim **Echo Spot** gibt es zusätzlich einen Sonderw
 siehe die englische Anleitung). Beim **Dot 2** ist das **nicht** nötig: Der
 Exploit läuft hier über den **Fastboot-Modus**, nicht über den BootROM. Das Entsperren funktioniert
 deshalb direkt am Mac mit `fastbrick.sh` aus **`amonet-biscuit-v2.0.1.zip`** (dem Release-Anhang im
-XDA-Thread). Der Branch `mt8163-biscuit` auf GitHub ist noch v2.0.0 und bringt **kein**
-macOS-`fastboot` mit. Nimm also den ZIP-Anhang, nicht das bloße Git-Repository.
+XDA-Thread). Der ZIP-Anhang bleibt der erprobte Weg. Der Branch `mt8163-biscuit` auf GitHub ist
+inzwischen weiter: Er bringt `fastbrick.ps1`/`fastbrick.bat` für Windows mit und greift auf ein
+`fastboot` aus dem `PATH` zurück, wenn keins im `bin/`-Ordner liegt – zur Not geht also auch das
+bloße Git-Repository. Am Mac und unter Linux nimm, was im Thread erprobt ist: den ZIP-Anhang (v2.0.1).
 
 ## 3. Der Weg in sieben Schritten
 
@@ -134,6 +137,10 @@ Entweder einmal in Fire OS das WLAN über die Alexa-App einrichten (den Rest der
 darf man überspringen), oder dem Installer das Netz mit `--wifi "<Netzwerkname>"` mitgeben. Er fragt
 dann nach dem Passwort.
 
+Hat Fire OS noch ein Netz gespeichert – etwa von einem Vorbesitzer –, nennt der Installer es beim
+Namen und fragt vorher, ob er es nehmen soll (seit v1.0.74). Für Skripte gibt es
+`--wifi-passphrase-file`.
+
 ✅ Prüfung: `adb devices` zeigt `device`, und `adb shell id` meldet `uid=0`.
 
 ### Schritt 6 – TECHO5 Dot installieren
@@ -148,6 +155,21 @@ python3 tools/install-dot.py
 Der Trockenlauf sichert **alle Boot-Partitionen** nach `backups/<Seriennummer>/`. **Diesen Ordner
 unbedingt aufbewahren**, er ist der Weg zurück und enthält auch den Home-Assistant-Schlüssel. Der
 zweite Lauf installiert und wartet, bis der erste Start „healthy" meldet.
+
+Hat der Dot noch keinen Namen, fragt der Installer, wie er in Home Assistant heißen soll. Aus einem
+Skript heraus geht das ohne Rückfrage:
+
+```bash
+python3 tools/install-dot.py --serial <adb-Seriennummer> --name "Küche"
+python3 tools/install-dot.py --for-someone-else           # Gerät für jemand anderen
+python3 tools/install-dot.py --release dot-v1.0.80        # statt der neuesten Release
+```
+
+`--for-someone-else` gibt den Dot weiter: kein gespeichertes WLAN, kein Name, kein Schlüssel – ein
+früherer Stand wird dabei gelöscht. Beim ersten Einschalten pulsiert der Ring nach etwa 45 Sekunden
+türkis, der neue Besitzer gibt ihm per Improv (Home Assistant oder
+[improv-wifi.com](https://www.improv-wifi.com)) sein WLAN, danach findet Home Assistant ihn ohne
+tippen. Mit `--no-bluetooth-kernel` bleibt der Kernel des Geräts ohne Bluetooth.
 
 ✅ Prüfung: Der Installer endet mit „healthy", und der Home-Assistant-Port antwortet.
 
@@ -165,6 +187,10 @@ Siehe nächstes Kapitel.
 3. **Wake Word wählen** am Assist-Satelliten: Okay Nabu, Hey Jarvis, Hey Mycroft, Alexa und weitere.
    Die ersten vier sind die leichten.
 4. **Updates** kommen danach über die Update-Karte in HA (signiert, mit automatischem Rollback).
+   Seit v1.0.74 gibt es dort zusätzlich **Roll back**, das auf die vorher gelaufene Version
+   zurückgeht. Updates tragen nur das Root-Dateisystem; das Bluetooth-Kernel-Image holt man mit
+   `python3 tools/update-boot.py --serial <Seriennummer> --address <Adresse>` nach (SSH dafür in Home
+   Assistant einschalten).
 
 ### Sprache: `de_DE`, nicht `de`
 
@@ -230,14 +256,60 @@ HA-Start, ob die Wörter stimmen, und setzt sie ggf. zurück:
 > Die Automation im Repo ist für eine deutsche Oberfläche eingerichtet und muss
 > an die eigenen Gerätenamen angepasst werden.
 
-## 7. Neue Funktionen (v1.0.74 bis v1.0.78)
+## 7. Neue Funktionen (v1.0.73 bis v1.0.80)
 
 TECHO5 Dot erscheint fast täglich in neuen Versionen. Hier steht, was seit v1.0.73 für den
-Echo Dot 2. Gen. dazugekommen ist (Stand 23.11.2026). Vollständig und verbindlich sind die
+Echo Dot 2. Gen. dazugekommen ist (Stand 24.11.2026). Vollständig und verbindlich sind die
 [Release-Notizen auf GitHub](https://github.com/HuskerMinion/techo5-dot/releases) (Englisch).
 
 > **Update einspielen:** In Home Assistant über die Update-Karte des Dots (Auto-Update ist
 > standardmäßig aus). Danach kurz prüfen, ob beide Aktivierungswörter noch gesetzt sind.
+
+### v1.0.80 (24.11.2026)
+
+[Release dot-v1.0.80](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.80):
+
+- **Speicher schonen – der eMMC:** Das eingebaute Flash ist bei einem alten Echo das Teil, das
+  zuerst verschleißt, und TECHO5 schreibt jetzt deutlich weniger darauf: Das Log wird alle **fünf
+  Minuten** gesichert (sofort bei Warnung oder Fehler) statt alle fünf Sekunden, die Datenpartition
+  committet **einmal pro Minute** (`commit=60`), die „wake frames"-Zeile steht alle **zehn Minuten**
+  im Log, und Wake-Clips für einen Trainer warten im **RAM**, bis sie gesendet sind. Der
+  Geräte-Cache von BlueZ liegt im RAM, nicht mehr auf `userdata`. Auf einem Show waren das rund
+  **95 % weniger** (etwa 770 MB/Tag vorher, 35 MB/Tag jetzt); ein Dot schreibt von Haus aus
+  weniger, sein größter Posten – das Log – fällt aber genauso weg.
+- **Preis dafür:** Nach einem **Stromausfall** können bis zu **eine Minute** nicht gesicherter Daten
+  verloren gehen. Einstellungen sichern sich sofort.
+- **Add-ons:** Die Setup-Seite hat eine Karte **Add-ons** (Tab *System*) für Add-ons aus dem
+  signierten Katalog von TECHO5 – installieren, aktualisieren, starten, stoppen, entfernen. Jede
+  Installation zeigt eine Warnung und braucht ein Häkchen, jedes Add-on läuft als **eigener
+  Benutzer** und bekommt nur die Ports, die es angibt, und Home Assistant erhält pro Add-on eine
+  Update-Entität. **Für die Dots ist noch nichts im Katalog** – eine leere Liste ist kein Fehler.
+  Erstes Add-on ist der Plex-Player
+  ([techo5-plex](https://github.com/HuskerMinion/techo5-plex)) für die Shows. Eigene Programme über
+  `rc.local` laufen weiter und stehen auf der Karte unter *Found on this device*.
+- **Härtung:** Logs und State-Ordner sind **nur noch für root** lesbar, `/tmp` ist auf **32 MB**
+  begrenzt, Bluetooth und Avahi auf dem Systembus bekommen nur die Benutzer, die sie brauchen.
+  Eigene Skripte, die große Dateien in `/tmp` ablegen, sollen sie nach `/data` verschieben.
+- **Echo Wall Clock:** Läuft jetzt auch am Dot 2 und am Echo 2
+  ([#722](https://github.com/HuskerMinion/techo5/issues/722)).
+- **Antworten auf einem anderen Lautsprecher:** Mit **Reply player** macht Home Assistant die
+  Antworten in 48 kHz statt 16 kHz ([#715](https://github.com/HuskerMinion/techo5/issues/715)).
+- **Music Assistant:** Der Dot springt nicht mehr zwischen seinem alten und dem neuen
+  Sendspin-Player hin und her. Automatisierungen auf den **neuen** Player umziehen und den alten
+  löschen ([#721](https://github.com/HuskerMinion/techo5/issues/721)) – siehe v1.0.76.
+- **Timer:** `alarms_list` sagt, welche Timer still sind, „cancel timers" des eingebauten
+  Assistenten lässt einen stillen Timer in Ruhe, und „stop time" über einem klingelnden Timer
+  stoppt ihn ([#723](https://github.com/HuskerMinion/techo5/issues/723),
+  [#724](https://github.com/HuskerMinion/techo5/issues/724)).
+
+### v1.0.79 (24.11.2026)
+
+[Release dot-v1.0.79](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.79):
+
+- **Spulen aus DLNA-Apps:** Ein Sprung in der App bewegt sich jetzt durch MP3, WAV oder FLAC von
+  einem Server, der Byte-Bereiche ausliefert.
+- **Stream-Adressen:** Die Adresse eines Streams sieht nur die App vollständig, die ihn geschickt
+  hat; andere Geräte im Netz sehen sie mit ausgeblendeten Login-Tokens.
 
 ### v1.0.78 (23.11.2026)
 
@@ -360,6 +432,9 @@ Assistant zeigen danach „unavailable" – diese Entitäten können dort gelös
 - **Installer meldet Prüfsummenfehler:** Der Download wird einmal wiederholt. Passt die Byte-Zahl
   nicht zur Release-Seite, ist die Verbindung abgebrochen (weniger) oder Virenscanner/Proxy haben die
   Datei verändert (gleiche Zahl).
+- **Add-on-Karte ist leer:** Für die Dots ist noch nichts im Katalog – kein Fehler (Kapitel 7,
+  v1.0.80).
+- **Dot steht doppelt in Music Assistant:** den alten Player löschen (Kapitel 7, v1.0.76/v1.0.80).
 - **Fehler melden:** In den GitHub-Issues des Projekts, mit Gerät, Schritt und Ausgabe.
 
 ## 9. Quellen und Dank
