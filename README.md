@@ -3,7 +3,7 @@ Inoffizielle deutsche Anleitung: vom originalen **Echo Dot 2. Generation (2016, 
 **Home-Assistant-Sprachassistenten** mit [TECHO5 Dot](https://github.com/HuskerMinion/techo5-dot) –
 ohne Amazon-Cloud, ohne Alexa.
 
-> **Stand:** TECHO5 Dot **v1.0.80** (24.11.2026), TECHO5-Daemon **v1.6.53**, Home Assistant 2026.11,
+> **Stand:** TECHO5 Dot **v1.0.81** (25.11.2026), TECHO5-Daemon **v1.6.54**, Home Assistant 2026.11,
 > ESPHome 2026.5. Diese Seite ist seit v1.0.73 auch im englischen Dot-README verlinkt (techo5#637).
 > TECHO5 ändert sich fast wöchentlich. Maßgeblich ist immer die
 > [englische Anleitung](https://github.com/HuskerMinion/techo5/blob/main/docs/getting-started.md);
@@ -25,7 +25,7 @@ ohne Amazon-Cloud, ohne Alexa.
 4. [In Home Assistant einrichten (Deutsch!)](#4-in-home-assistant-einrichten-deutsch)
 5. [Mikrofone](#5-mikrofone)
 6. [Bekanntes Problem: Wake Word nach HA-Neustart oder Firmware-Update](#6-bekanntes-problem-wake-word-nach-ha-neustart-oder-firmware-update)
-7. [Neue Funktionen (v1.0.73 bis v1.0.80)](#7-neue-funktionen-v1073-bis-v1080)
+7. [Neue Funktionen (v1.0.73 bis v1.0.81)](#7-neue-funktionen-v1073-bis-v1081)
 8. [Wenn etwas nicht klappt](#8-wenn-etwas-nicht-klappt)
 9. [Quellen und Dank](#9-quellen-und-dank)
 
@@ -162,7 +162,7 @@ Skript heraus geht das ohne Rückfrage:
 ```bash
 python3 tools/install-dot.py --serial <adb-Seriennummer> --name "Küche"
 python3 tools/install-dot.py --for-someone-else           # Gerät für jemand anderen
-python3 tools/install-dot.py --release dot-v1.0.80        # statt der neuesten Release
+python3 tools/install-dot.py --release dot-v1.0.81        # statt der neuesten Release
 ```
 
 `--for-someone-else` gibt den Dot weiter: kein gespeichertes WLAN, kein Name, kein Schlüssel – ein
@@ -256,14 +256,57 @@ HA-Start, ob die Wörter stimmen, und setzt sie ggf. zurück:
 > Die Automation im Repo ist für eine deutsche Oberfläche eingerichtet und muss
 > an die eigenen Gerätenamen angepasst werden.
 
-## 7. Neue Funktionen (v1.0.73 bis v1.0.80)
+## 7. Neue Funktionen (v1.0.73 bis v1.0.81)
 
 TECHO5 Dot erscheint fast täglich in neuen Versionen. Hier steht, was seit v1.0.73 für den
-Echo Dot 2. Gen. dazugekommen ist (Stand 24.11.2026). Vollständig und verbindlich sind die
+Echo Dot 2. Gen. dazugekommen ist (Stand 25.11.2026). Vollständig und verbindlich sind die
 [Release-Notizen auf GitHub](https://github.com/HuskerMinion/techo5-dot/releases) (Englisch).
 
 > **Update einspielen:** In Home Assistant über die Update-Karte des Dots (Auto-Update ist
 > standardmäßig aus). Danach kurz prüfen, ob beide Aktivierungswörter noch gesetzt sind.
+
+### v1.0.81 (25.11.2026)
+
+[Release dot-v1.0.81](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.81):
+
+- **Eigenes Stopp-Wort – für Deutsch der interessanteste Punkt.** Neben der Schwelle gibt es jetzt
+  ein Select **Stop word**. Statt des eingebauten englischen Modells kann dort ein eigenes Modell
+  lauschen, etwa ein deutsches „Stopp". Nach dem Aktivierungswort stoppen „Stopp", „Aus" und die
+  Stopp-Wörter der übrigen TECHO5-Sprachen einen klingelnden Alarm oder Timer
+  ([#741](https://github.com/HuskerMinion/techo5/issues/741)).
+- **Nächstes Gerät:** Ein Aktivierungswort, das über die eigene Antwort eines Dots gesagt wird,
+  beantwortet dieses Gerät – nicht eines, das es nur nebenbei gehört hat
+  ([#737](https://github.com/HuskerMinion/techo5/issues/737)).
+- **Timer:** Die Timer-Aktionen nehmen Längen auch in Worten an („zehn Minuten", „anderthalb
+  Stunden"); `alarms_list` sagt mit `kind`, ob Timer oder Alarm klingelt – eine Automatisierung, die
+  jedes Klingeln als Alarm gewertet hat, muss das prüfen. Der Blueprint „stop alarm by voice" stoppt
+  auch einen Timer (Blueprint neu importieren).
+- **Lichtring:** Eine ausgeschaltete Ringfarbe kommt nach einem Neustart in ihrer eigenen Farbe
+  zurück, statt bis zum nächsten Farbsetzen aus Home Assistant weiß zu leuchten
+  ([#726](https://github.com/HuskerMinion/techo5/issues/726)).
+- **Bluetooth-Lautsprecher:** Ein Lautsprecher mit festem PIN ungleich `0000` lässt sich jetzt
+  koppeln (ein Gecko in.stream 2 will `5555`) ([techo5-dot#56](https://github.com/HuskerMinion/techo5-dot/issues/56)).
+- **Absturz-Logs am Dot 2:** Nach einem Watchdog-Reset oder Kernel-Panic liegt das Kernel-Log des
+  vorigen Starts unter `/data/techo5-linux/crash` (die letzten fünf). Ein Hänger hinterlässt damit
+  seine letzten Worte ([techo5-dot#57](https://github.com/HuskerMinion/techo5-dot/issues/57)).
+- **Add-ons:** Ein Add-on kann zusätzliche Dateien mitbringen; die Karte **Add-ons** listet sie mit
+  Name und Größe vor der Installation. Für die Dots ist weiterhin nichts im Katalog.
+- **Systempakete:** OpenSSL 3.5.9, zlib 1.4, GLib 2.88.4, expat 2.10, libffi 3.8, zstd 1.6, PCRE2,
+  libtiff, Zeitzonen-Datenbank 2026f und Shairport Sync 5.5.1 aktualisiert.
+- **Behoben:**
+  - **Deutsche Privatradios** (und andere Sender) schickten einen Zehn-Sekunden-Schnipsel und dann
+    Stille – sie laufen jetzt live ([#730](https://github.com/HuskerMinion/techo5/issues/730)).
+  - Music Assistant findet ein Gerät über verschlüsseltes Sendspin wieder, URL und Token werden
+    gespeichert und Sprachantworten spielen ([#738](https://github.com/HuskerMinion/techo5/issues/738)).
+  - Das Audio eines gehaltenen Aktivierungsworts kommt wieder bei Home Assistant an
+    ([#728](https://github.com/HuskerMinion/techo5/issues/728), gemeldet von chr-braun).
+  - Ein Fast-Treffer dreht die Musik nach dem Zug nicht mehr leise stehen
+    ([#725](https://github.com/HuskerMinion/techo5/issues/725)).
+- **Härtung:** Der Port der Setup-Seite wird gehalten, solange der Daemon läuft; der Ordner im
+  Speicher für wartende Wake-Clips wird nur benutzt, wenn er root gehört.
+- **Stromausfall beim Start:** Das README beschreibt jetzt, was wiederholte Stromausfälle in den
+  ersten anderthalb Minuten eines Starts am Echo Dot 2. Gen. anrichten und wie `techo5-retry` das
+  Gerät aus seiner Rettungsumgebung zurückholt. **Netzteil nicht achtlos vom Strom trennen.**
 
 ### v1.0.80 (24.11.2026)
 
@@ -432,6 +475,9 @@ Assistant zeigen danach „unavailable" – diese Entitäten können dort gelös
 - **Installer meldet Prüfsummenfehler:** Der Download wird einmal wiederholt. Passt die Byte-Zahl
   nicht zur Release-Seite, ist die Verbindung abgebrochen (weniger) oder Virenscanner/Proxy haben die
   Datei verändert (gleiche Zahl).
+- **Dot hängt oder startet neu:** Seit v1.0.81 liegt das Kernel-Log des vorigen Starts unter
+  `/data/techo5-linux/crash` (die letzten fünf) – das ist die erste Stelle zum Nachsehen
+  (Kapitel 7, v1.0.81).
 - **Add-on-Karte ist leer:** Für die Dots ist noch nichts im Katalog – kein Fehler (Kapitel 7,
   v1.0.80).
 - **Dot steht doppelt in Music Assistant:** den alten Player löschen (Kapitel 7, v1.0.76/v1.0.80).
