@@ -3,7 +3,7 @@ Inoffizielle deutsche Anleitung: vom originalen **Echo Dot 2. Generation (2016, 
 **Home-Assistant-Sprachassistenten** mit [TECHO5 Dot](https://github.com/HuskerMinion/techo5-dot) –
 ohne Amazon-Cloud, ohne Alexa.
 
-> **Stand:** TECHO5 Dot **v1.0.81** (25.11.2026), TECHO5-Daemon **v1.6.54**, Home Assistant 2026.11,
+> **Stand:** TECHO5 Dot **v1.0.82** (27.11.2026), TECHO5-Daemon **v1.6.55**, Home Assistant 2026.11,
 > ESPHome 2026.5. Diese Seite ist seit v1.0.73 auch im englischen Dot-README verlinkt (techo5#637).
 > TECHO5 ändert sich fast wöchentlich. Maßgeblich ist immer die
 > [englische Anleitung](https://github.com/HuskerMinion/techo5/blob/main/docs/getting-started.md);
@@ -25,7 +25,7 @@ ohne Amazon-Cloud, ohne Alexa.
 4. [In Home Assistant einrichten (Deutsch!)](#4-in-home-assistant-einrichten-deutsch)
 5. [Mikrofone](#5-mikrofone)
 6. [Bekanntes Problem: Wake Word nach HA-Neustart oder Firmware-Update](#6-bekanntes-problem-wake-word-nach-ha-neustart-oder-firmware-update)
-7. [Neue Funktionen (v1.0.73 bis v1.0.81)](#7-neue-funktionen-v1073-bis-v1081)
+7. [Neue Funktionen (v1.0.73 bis v1.0.82)](#7-neue-funktionen-v1073-bis-v1082)
 8. [Wenn etwas nicht klappt](#8-wenn-etwas-nicht-klappt)
 9. [Quellen und Dank](#9-quellen-und-dank)
 
@@ -162,7 +162,7 @@ Skript heraus geht das ohne Rückfrage:
 ```bash
 python3 tools/install-dot.py --serial <adb-Seriennummer> --name "Küche"
 python3 tools/install-dot.py --for-someone-else           # Gerät für jemand anderen
-python3 tools/install-dot.py --release dot-v1.0.81        # statt der neuesten Release
+python3 tools/install-dot.py --release dot-v1.0.82        # statt der neuesten Release
 ```
 
 `--for-someone-else` gibt den Dot weiter: kein gespeichertes WLAN, kein Name, kein Schlüssel – ein
@@ -256,14 +256,51 @@ HA-Start, ob die Wörter stimmen, und setzt sie ggf. zurück:
 > Die Automation im Repo ist für eine deutsche Oberfläche eingerichtet und muss
 > an die eigenen Gerätenamen angepasst werden.
 
-## 7. Neue Funktionen (v1.0.73 bis v1.0.81)
+## 7. Neue Funktionen (v1.0.73 bis v1.0.82)
 
 TECHO5 Dot erscheint fast täglich in neuen Versionen. Hier steht, was seit v1.0.73 für den
-Echo Dot 2. Gen. dazugekommen ist (Stand 25.11.2026). Vollständig und verbindlich sind die
+Echo Dot 2. Gen. dazugekommen ist (Stand 28.11.2026). Vollständig und verbindlich sind die
 [Release-Notizen auf GitHub](https://github.com/HuskerMinion/techo5-dot/releases) (Englisch).
 
 > **Update einspielen:** In Home Assistant über die Update-Karte des Dots (Auto-Update ist
 > standardmäßig aus). Danach kurz prüfen, ob beide Aktivierungswörter noch gesetzt sind.
+
+### v1.0.82 (27.11.2026)
+
+[Release dot-v1.0.82](https://github.com/HuskerMinion/techo5-dot/releases/tag/dot-v1.0.82) und
+[Daemon v1.6.55](https://github.com/HuskerMinion/techo5/releases/tag/v1.6.55):
+
+- **Kernel-Fix für den Dot 2 – der wichtigste Punkt dieses Releases.** dot-v1.0.81 ging mit
+  **älteren Kernels** out, denen der Group-Key-Rekey-Fix aus techo5-dot#49 fehlte
+  ([techo5-dot#60](https://github.com/HuskerMinion/techo5-dot/issues/60)). Wer noch auf v1.0.81
+  steht, sollte auf v1.0.82 gehen. Der *optionale* 6.1-Kernel für den Echo 2. Gen. hat den Fix
+  noch nicht.
+- **Aufwecksignal sofort:** Mit „Nächstes Gerät" gibt jedes Gerät, das das Aktivierungswort klar
+  hört, seinen Ton sofort – die übrigen bleiben still. Dadurch sind jetzt **zwei Töne** möglich
+  ([#727](https://github.com/HuskerMinion/techo5/issues/727)).
+- **Nächstes Gerät:** Bei fast gleichem Pegel gewinnt das Gerät, das das Wort besser über sein
+  eigenes Hintergrundgeräusch gehört hat
+  ([#716](https://github.com/HuskerMinion/techo5/issues/716)).
+- **Beamformer am Dot 2:** Die Einstellung **Mikrofon-Mixing → Beamformer** liest die Gewichte
+  von Fire OS 6 jetzt an der richtigen Stelle und steuert damit tatsächlich
+  ([#774](https://github.com/HuskerMinion/techo5/issues/774)).
+- **Flash-Verschleiß:** Neue Diagnose-Sensoren **Flash life used**, **Flash spare blocks** und
+  **Flash data written**. Interessant, weil die Dots auf ihre eMMC schreiben
+  ([#771](https://github.com/HuskerMinion/techo5/issues/771)).
+- **Add-on-Bildschirme** (Daemon): Ein Add-on kann eine eigene Seite unter dem Reiter
+  **Add-ons** und eine kleine Karte über der Uhr zeichnen. Für die Dots ist weiterhin nichts
+  im Katalog ([#720](https://github.com/HuskerMinion/techo5/issues/720)).
+- **Wetterwarnungen für Europa** (Daemon).
+- **Behoben:**
+  - MP3-Streams, die mitten in einem Frame beginnen, spielen jetzt
+    ([#777](https://github.com/HuskerMinion/techo5/issues/777)).
+  - Das Kernel-Log des vorigen Starts bleibt nach einem Watchdog-Reset erhalten, damit ein
+    Hänger seine letzten Worte hinterlässt (passt zum Crash-Log-Pfad aus v1.0.81).
+
+> **Offen im Blick behalten:** [techo5-dot#57](https://github.com/HuskerMinion/techo5-dot/issues/57)
+> – ein Dot 2 kann nach einem Watchdog-Reset wieder in Fire OS/Alexa starten, obwohl die
+> Bootloader-Meldung gesetzt ist. Bisher ein Einzelfall; wenn es hier passiert, hilft nur neu
+> flashen.
 
 ### v1.0.81 (25.11.2026)
 
